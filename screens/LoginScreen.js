@@ -10,10 +10,13 @@ import {
   SafeAreaView,
   ScrollView,
   Keyboard,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 
 const InputField = ({ icon, placeholder, value, onChangeText, secureTextEntry, keyboardType }) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -43,22 +46,43 @@ const InputField = ({ icon, placeholder, value, onChangeText, secureTextEntry, k
 };
 
 const LoginScreen = ({ navigation }) => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
     Keyboard.dismiss();
-    if (!email || !password) {
+    if (!username || !password) {
+      Alert.alert("Validation Error", "Username and password are required.");
       return;
     }
-    
+
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      navigation.navigate('Home');
+      const response = await axios.post(
+        "http://192.168.71.243:3000/api/auth/login", {
+          username,
+          password
+        });
+
+      if (response.data.token) {
+        await AsyncStorage.setItem("user-token", response.data.token);
+        navigation.navigate('Home');
+      } else {
+        Alert.alert("Login failed", "Invalid credentials, please try again.");
+      }
     } catch (error) {
-      // Handle error
+      console.error("Login request failed:", error);
+      if (error.response) {
+        // Server responded with a status other than 2xx
+        Alert.alert("Login Error", error.response.data.message || "Something went wrong. Please try again.");
+      } else if (error.request) {
+        // No response from server
+        Alert.alert("Network Error", "Please check your internet connection.");
+      } else {
+        // Something else went wrong
+        Alert.alert("Error", "An unexpected error occurred.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -94,10 +118,10 @@ const LoginScreen = ({ navigation }) => {
             <View style={styles.formContainer}>
               <InputField
                 icon="mail"
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
+                placeholder="Username"
+                value={username}
+                onChangeText={setUsername}
+                keyboardType="default"
               />
 
               <InputField
@@ -128,17 +152,6 @@ const LoginScreen = ({ navigation }) => {
                     <Feather name="arrow-right" size={20} color="#FFF" />
                   </>
                 )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.signupButton}
-                onPress={() => {
-                  Keyboard.dismiss();
-                  navigation.navigate('SignUp');
-                }}
-              >
-                <Text style={styles.signupText}>Don't have an account? </Text>
-                <Text style={styles.signupLink}>Sign Up</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
