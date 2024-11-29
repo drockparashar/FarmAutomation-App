@@ -67,7 +67,7 @@ const LoginScreen = ({ navigation }) => {
 
       if (response.data.token) {
         await AsyncStorage.setItem("user-token", response.data.token);
-        navigation.navigate('Home');
+        navigation.navigate('PolyhouseList');
       } else {
         Alert.alert("Login failed", "Invalid credentials, please try again.");
       }
