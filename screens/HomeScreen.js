@@ -1,9 +1,8 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-
-// You'll need to install these icons from @expo/vector-icons
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import axios from 'axios';
 
 const Card = ({ title, value, icon, color }) => (
   <View style={[styles.card, { borderColor: color }]}>
@@ -20,7 +19,30 @@ const ControlButton = ({ title, icon, onPress }) => (
   </TouchableOpacity>
 );
 
-const HomeScreen = ({ navigation }) => {
+const HomeScreen = ({ route, navigation }) => {
+  const { polyhouseId } = route.params; // Get polyhouseId from route params
+  const [distance, setDistance] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch polyhouse details
+  const fetchPolyhouseDetails = async () => {
+    try {
+      setIsLoading(true);
+      // API call to fetch distance dynamically
+      const response = await axios.get(`http://192.168.55.243:3003/api/polyhouses/${polyhouseId}`);
+      setDistance(response.data.distance); // Assuming the API returns `distance`
+    } catch (error) {
+      console.error('Error fetching polyhouse details:', error);
+      setDistance('N/A');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPolyhouseDetails();
+  }, [polyhouseId]);
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
@@ -31,7 +53,7 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.header}>
             <Text style={styles.title}>Polyhouse</Text>
             <Text style={styles.subtitle}>Automation System</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.settingsButton}
               onPress={() => navigation.navigate('Settings')}
             >
@@ -40,49 +62,67 @@ const HomeScreen = ({ navigation }) => {
           </View>
 
           {/* Status Cards */}
-          <View style={styles.statusContainer}>
-            <Card 
-              title="Temperature"
-              value="25°C"
-              icon="thermometer"
-              color="#FF6B6B"
-            />
-            <Card 
-              title="Humidity"
-              value="70%"
-              icon="water-percent"
-              color="#4ECDC4"
-            />
-            <Card 
-              title="Light"
-              value="1200 lux"
-              icon="white-balance-sunny"
-              color="#FFE66D"
-            />
-          </View>
+          {isLoading ? (
+            <ActivityIndicator size="large" color="#FFF" style={{ marginTop: 20 }} />
+          ) : (
+            <View style={styles.statusContainer}>
+              <Card
+                title="Temperature"
+                value="25°C" // Static for now
+                icon="thermometer"
+                color="#FF6B6B"
+              />
+              <Card
+                title="Humidity"
+                value="70%" // Static for now
+                icon="water-percent"
+                color="#4ECDC4"
+              />
+              <Card
+                title="Light"
+                value="1200 lux" // Static for now
+                icon="white-balance-sunny"
+                color="#FFE66D"
+              />
+              <Card
+                title="Distance"
+                value={distance ? `${distance} m` : 'N/A'} // Dynamic value
+                icon="map-marker-distance"
+                color="#6A5ACD"
+              />
+            </View>
+          )}
 
           {/* Control Section */}
           <Text style={styles.sectionTitle}>Controls</Text>
           <View style={styles.controlsGrid}>
-            <ControlButton 
+            <ControlButton
               title="Irrigation"
               icon="droplet"
-              onPress={() => {/* Control logic */}}
+              onPress={() => {
+                /* Control logic */
+              }}
             />
-            <ControlButton 
+            <ControlButton
               title="Temperature"
               icon="thermometer"
-              onPress={() => {/* Control logic */}}
+              onPress={() => {
+                /* Control logic */
+              }}
             />
-            <ControlButton 
+            <ControlButton
               title="Humidity"
               icon="cloud"
-              onPress={() => {/* Control logic */}}
+              onPress={() => {
+                /* Control logic */
+              }}
             />
-            <ControlButton 
+            <ControlButton
               title="Lighting"
               icon="sun"
-              onPress={() => {/* Control logic */}}
+              onPress={() => {
+                /* Control logic */
+              }}
             />
           </View>
         </ScrollView>
@@ -94,12 +134,11 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    
   },
   gradientBackground: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop:80
+    paddingTop: 80,
   },
   header: {
     marginTop: 20,

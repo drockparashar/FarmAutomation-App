@@ -9,18 +9,28 @@ const PolyhouseListScreen = ({ navigation }) => {
 
   // Fetch user's polyhouses
   const fetchPolyhouses = async () => {
-    setIsLoading(true);
     try {
-      const token = await AsyncStorage.getItem('user-token');
-      const response = await axios.get('http://192.168.71.243:3000/api/polyhouses', {
+      setIsLoading(true); // Show loading indicator
+      const token = await AsyncStorage.getItem('user-token'); // Get the token
+  
+      if (!token) {
+        Alert.alert('Authentication Error', 'User token not found. Please log in again.');
+        return;
+      }
+  
+      const response = await axios.get('http://192.168.55.243:3003/api/polyhouses', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setPolyhouses(response.data.polyhouses);
+  
+      setPolyhouses(response.data); // Assuming response.data contains the polyhouses array
     } catch (error) {
       console.error('Error fetching polyhouses:', error);
-      Alert.alert('Error', 'Unable to fetch polyhouses. Please try again later.');
+      Alert.alert(
+        'Error',
+        error.response?.data?.error || 'Unable to fetch polyhouses. Please try again later.'
+      );
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Hide loading indicator
     }
   };
 
@@ -38,10 +48,13 @@ const PolyhouseListScreen = ({ navigation }) => {
             data={polyhouses}
             keyExtractor={(item) => item._id}
             renderItem={({ item }) => (
-              <View style={styles.polyhouseItem}>
+              <TouchableOpacity
+                style={styles.polyhouseItem}
+                onPress={() => navigation.navigate('PolyhouseDetail', { polyhouse: item })}
+              >
                 <Text style={styles.polyhouseName}>{item.name}</Text>
                 <Text style={styles.polyhouseLocation}>{item.location.address || 'No address provided'}</Text>
-              </View>
+              </TouchableOpacity>
             )}
             ListHeaderComponent={
               <Text style={styles.headerText}>My Polyhouses</Text>

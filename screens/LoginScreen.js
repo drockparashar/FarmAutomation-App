@@ -60,7 +60,7 @@ const LoginScreen = ({ navigation }) => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "http://192.168.71.243:3000/api/auth/login", {
+        "http://192.168.55.243:3003/api/auth/login", {
           username,
           password
         });

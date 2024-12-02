@@ -10,36 +10,46 @@ const CreatePolyhouseScreen = ({ navigation }) => {
 
   // Create a new polyhouse
   const handleCreatePolyhouse = async () => {
-    if (!polyhouseName || !location) {
+    if (!polyhouseName.trim() || !location.trim()) {
       Alert.alert('Validation Error', 'Please enter both a name and a location.');
       return;
     }
-
-    setIsSubmitting(true);
+  
     try {
-      const token = await AsyncStorage.getItem('user-token');
+      setIsSubmitting(true); // Show a submission indicator
+      const token = await AsyncStorage.getItem('user-token'); // Get the token
+  
+      if (!token) {
+        Alert.alert('Authentication Error', 'User token not found. Please log in again.');
+        return;
+      }
+  
       const response = await axios.post(
-        'http://192.168.71.243:3000/api/polyhouses',
+        'http://192.168.55.243:3003/api/polyhouses',
         {
-          name: polyhouseName,
+          name: polyhouseName.trim(),
           location: { address: location },
         },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
+  
       Alert.alert('Success', 'Polyhouse created successfully!');
-      setPolyhouseName('');
+      setPolyhouseName(''); // Reset the form fields
       setLocation('');
-      navigation.goBack(); // Go back to the list page
+      navigation.navigate('PolyhouseList'); // Navigate back to the list of polyhouses
     } catch (error) {
       console.error('Error creating polyhouse:', error);
-      Alert.alert('Error', 'Unable to create polyhouse. Please try again later.');
+      Alert.alert(
+        'Error',
+        error.response?.data?.error || 'Unable to create polyhouse. Please try again later.'
+      );
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false); // Hide submission indicator
     }
   };
+  
 
   return (
     <View style={styles.container}>
